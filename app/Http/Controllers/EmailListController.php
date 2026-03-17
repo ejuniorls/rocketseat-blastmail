@@ -22,7 +22,7 @@ class EmailListController extends Controller
      */
     public function create()
     {
-        //
+        return view('email-list.create');
     }
 
     /**
@@ -30,7 +30,16 @@ class EmailListController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'title' => ['required', 'max:255'],
+            // 'file' => ['required', 'file'],
+        ]);
+
+        EmailList::query()->create($data);
+
+        return redirect()->route('email-list.index');
+
+        dd($request->all());
     }
 
     /**
