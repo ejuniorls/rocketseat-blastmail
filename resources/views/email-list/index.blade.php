@@ -4,9 +4,8 @@
     </x-slot>
 
     <x-card>
-        @dd($emailLists)
         @forelse($emailLists as $list)
-            <button>dsada</button>
+            <button>{{ $list->title }}</button>
         @empty
             {{-- Adicione items-center aqui --}}
             <div class="flex justify-center items-center h-full">
