@@ -21,7 +21,7 @@
                         <tr>
                             <x-td>{{ $list->id }}</x-td>
                             <x-td>{{ $list->title }}</x-td>
-                            <x-td>{{ $list->subscribers()->count() }}</x-td>
+                            <x-td>{{ $list->subscribers_count }}</x-td>
                             <x-td>#</x-td>
                         </tr>
                     @endforeach
