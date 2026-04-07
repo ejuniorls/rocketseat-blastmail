@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmailList;
-use GuzzleHttp\Psr7\UploadedFile;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
 class EmailListController extends Controller
@@ -16,16 +16,20 @@ class EmailListController extends Controller
     public function index()
     {
         $search = request()->search;
-
         $emailLists = EmailList::query()
             ->withCount('subscribers')
-            ->when($search, fn(Builder $query) => $query->where('title', 'like', '%' . $search . '%'))
+            ->when(
+                $search,
+                fn(Builder $query) => $query
+                    ->where('title', 'like', "%$search%")
+                    ->orWhere('id', '=', $search)
+            )
             ->paginate(5)
             ->appends(compact('search'));
 
         return view('email-list.index', [
             'emailLists' => $emailLists,
-            'search' => request()->search
+            'search' => $search,
         ]);
     }
 
@@ -44,19 +48,40 @@ class EmailListController extends Controller
     {
         $request->validate([
             'title' => ['required', 'max:255'],
-            'file' => ['required', 'file', 'mimes:csv'],
+            'file' => ['required', 'file', 'mimes:csv']
         ]);
 
         $emails = $this->getEmailsFromCsvFile($request->file('file'));
 
         DB::transaction(function () use ($request, $emails) {
-            $emailList = EmailList::query()->create(['title' => $request->title]);
-
+            $emailList = EmailList::query()->create([
+                'title' => $request->title
+            ]);
             $emailList->subscribers()->createMany($emails);
         });
 
+        return to_route('email-list.index');
+    }
 
-        return redirect()->route('email-list.index');
+    private function getEmailsFromCsvFile(UploadedFile $file): array
+    {
+        $fileHandle = fopen($file->getRealPath(), 'r');
+        $items = [];
+
+        while (($row = fgetcsv($fileHandle, null, ',')) !== false) {
+            if ($row[0] == 'Name' && $row[1] == 'Email') {
+                continue;
+            }
+
+            $items[] = [
+                'name' => $row[0],
+                'email' => $row[1]
+            ];
+        }
+
+        fclose($fileHandle);
+
+        return $items;
     }
 
     /**
@@ -89,26 +114,5 @@ class EmailListController extends Controller
     public function destroy(EmailList $emailList)
     {
         //
-    }
-
-    public function getEmailsFromCsvFile(UploadedFile $file): array
-    {
-        $fileHandle = fopen($file->getRealPath(), 'r');
-        $items = [];
-
-        while (($row = fgetcsv($fileHandle, null, ',')) !== false) {
-            if ($row[0] == 'Name' && $row[1] == 'Email') {
-                continue;
-            }
-
-            $items[] = [
-                'name' => $row[0],
-                'email' => $row[1],
-            ];
-        }
-
-        fclose($fileHandle);
-
-        return $items;
     }
 }

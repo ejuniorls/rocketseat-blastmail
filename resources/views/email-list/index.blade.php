@@ -1,45 +1,43 @@
 <x-layouts.app>
     <x-slot name="header">
-        <x-h2>{{ __('E-mail List') }}</x-h2>
+        <x-h2>
+            {{ __('Email List') }}
+        </x-h2>
     </x-slot>
 
     <x-card class="space-y-4">
-        <div class="flex justify-between">
-            <x-link-button :href="route('email-list.create')">
-                {{ __('Create a new email list')  }}
-            </x-link-button>
+        @unless ($emailLists->isEmpty() && blank($search))
+            <div class="flex justify-between">
+                <x-button.link :href="route('email-list.create')">
+                    {{ __('Create a new email list') }}
+                </x-button.link>
 
-            <x-form :action="route('email-list.index')" class="w-2/5">
-                <x-text-input name="search" :placeholder="__('Search')" :value="$search"/>
-            </x-form>
-        </div>
+                <x-form :action="route('email-list.index')" class="w-2/5">
+                    <x-input.text name="search" :placeholder="__('Search')" :value="$search" />
+                </x-form>
+            </div>
 
-        @unless($emailLists->isEmpty())
             <x-table :headers="['#', __('Email List'), __('# Subscribers'), __('Actions')]">
                 <x-slot name="body">
-                    @foreach($emailLists as $list)
+                    @foreach ($emailLists as $list)
                         <tr>
-                            <x-td>{{ $list->id }}</x-td>
-                            <x-td>{{ $list->title }}</x-td>
-                            <x-td>{{ $list->subscribers_count }}</x-td>
-                            <x-td>#</x-td>
+                            <x-table.td class="w-1">{{ $list->id }}</x-table.td>
+                            <x-table.td>{{ $list->title }}</x-table.td>
+                            <x-table.td class="w-1">{{ $list->subscribers_count }}</x-table.td>
+                            <x-table.td class="flex items-center space-x-4 w-1">
+                                <x-button.link secondary :href="route('subscribers.index', $list)">{{ __('Subscribers') }}</x-button.link>
+                            </x-table.td>
                         </tr>
                     @endforeach
                 </x-slot>
             </x-table>
 
-            {{-- Paginação --}}
-            @if(method_exists($emailLists, 'links'))
-                <div class="mt-4">
-                    {{ $emailLists->links() }}
-                </div>
-            @endif
+            {{ $emailLists->links() }}
         @else
-            {{-- Mostra apenas quando a lista está vazia --}}
-            <div class="flex justify-center items-center py-12">
-                <x-link-button :href="route('email-list.create')">
-                    {{ __('Create your first e-mail list') }}
-                </x-link-button>
+            <div class="text-center">
+                <x-button.link :href="route('email-list.create')">
+                    {{ __('Create your first email list') }}
+                </x-button.link>
             </div>
         @endunless
     </x-card>
